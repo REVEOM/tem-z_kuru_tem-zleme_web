@@ -98,9 +98,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return sessionStorage.getItem('temiz_admin_token');
   });
 
-  const [adminKey, setAdminKey] = useState<string>(() => {
-    return localStorage.getItem('temiz_admin_key') || (import.meta.env.VITE_ADMIN_KEY as string) || '';
-  });
+  // adminKey is intentionally removed from browser state.
+  // Authentication is handled server-side via /api/auth.
+  // Only the session token (adminToken) lives in sessionStorage.
+  const adminKey = ''; // kept for API header compat — token is used instead
+  const setAdminKey = (_: string) => { /* no-op: key never stored in browser */ };
 
   // Sync brand theme to document
   useEffect(() => {
@@ -144,7 +146,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!adminToken) return;
     try {
       const res = await fetch('/api/orders', {
-        headers: { 'x-admin-key': adminKey }
+        headers: { 'x-admin-token': adminToken || '' }
       });
       if (res.ok) {
         const data = await res.json();
@@ -186,7 +188,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': adminKey
+          'x-admin-token': adminToken || ''
         },
         body: JSON.stringify(updated)
       });
@@ -207,7 +209,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': adminKey
+          'x-admin-token': adminToken || ''
         },
         body: JSON.stringify(item)
       });
@@ -228,7 +230,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': adminKey
+          'x-admin-token': adminToken || ''
         },
         body: JSON.stringify({ item })
       });
@@ -247,7 +249,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       await fetch(`/api/pricing?id=${id}`, {
         method: 'DELETE',
-        headers: { 'x-admin-key': adminKey }
+        headers: { 'x-admin-token': adminToken || '' }
       });
     } catch {
       // Local storage saved
@@ -355,7 +357,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': adminKey
+          'x-admin-token': adminToken || ''
         },
         body: JSON.stringify({
           orderCode,
@@ -391,7 +393,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': adminKey
+          'x-admin-token': adminToken || ''
         },
         body: JSON.stringify({
           orderCode,
@@ -413,7 +415,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       await fetch(`/api/orders?code=${encodeURIComponent(orderCode)}`, {
         method: 'DELETE',
-        headers: { 'x-admin-key': adminKey }
+        headers: { 'x-admin-token': adminToken || '' }
       });
     } catch {
       // Local deleted
@@ -429,7 +431,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       await fetch('/api/orders?clearAll=true', {
         method: 'DELETE',
-        headers: { 'x-admin-key': adminKey }
+        headers: { 'x-admin-token': adminToken || '' }
       });
     } catch {
       // Local cleared
@@ -504,6 +506,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const applyCoupon = (code: string, subtotal: number) => {
     const cleanCode = code.trim().toUpperCase();
+    if (!cleanCode) {
+      return { valid: false, discountAmount: 0, message: '' };
+    }
     const found = coupons.find(c => c.code.toUpperCase() === cleanCode && c.active);
     if (!found) {
       return { valid: false, discountAmount: 0, message: 'Geçersiz veya süresi dolmuş indirim kodu.' };

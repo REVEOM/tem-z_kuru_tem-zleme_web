@@ -81,8 +81,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
     orders,
     coupons,
     adminToken,
-    adminKey,
-    setAdminKey,
     setAdminToken,
     updateSettings,
     updateServiceItem,
@@ -103,6 +101,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
   // Authentication state
   const [inputKey, setInputKey] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
 
   // Receipt Modal State
@@ -211,7 +210,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
   const [settingsSavedMessage, setSettingsSavedMessage] = useState(false);
   const [newDistrictInput, setNewDistrictInput] = useState('');
   const [copiedUrl, setCopiedUrl] = useState(false);
-  const [secretKeyInput, setSecretKeyInput] = useState(adminKey);
 
   // Secret direct access link
   const secretUrl = typeof window !== 'undefined'
@@ -226,8 +224,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
     }
   };
 
-  // Login handler
-  const handleLogin = (e: React.FormEvent) => {
+  // Login handler — server-side auth only, key never touches browser storage
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
 
@@ -237,39 +235,32 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
       return;
     }
 
-    // Generate cryptographic random token (no credential leakage)
-    const generateSecureToken = () => {
-      if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
-        const arr = new Uint8Array(24);
-        window.crypto.getRandomValues(arr);
-        return 'auth_' + Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-      return 'auth_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    };
+    setAuthLoading(true);
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: trimmedInput })
+      });
 
-    // First time setup: if no adminKey is configured yet
-    if (!adminKey) {
-      if (trimmedInput.length < 6) {
-        setAuthError('İlk kurulum için yönetici anahtarı en az 6 karakter olmalıdır.');
-        return;
+      if (res.ok) {
+        const data = await res.json() as { token: string };
+        const token = data.token;
+        sessionStorage.setItem('temiz_admin_token', token);
+        setAdminToken(token);
+        // Clear input for security
+        setInputKey('');
+      } else {
+        const err = await res.json() as { error?: string };
+        setAuthError(err.error || 'Geçersiz güvenlik anahtarı. Erişim reddedildi.');
       }
-      setAdminKey(trimmedInput);
-      localStorage.setItem('temiz_admin_key', trimmedInput);
-      const token = generateSecureToken();
-      sessionStorage.setItem('temiz_admin_token', token);
-      setAdminToken(token);
-      return;
-    }
-
-    if (trimmedInput === adminKey) {
-      const token = generateSecureToken();
-      sessionStorage.setItem('temiz_admin_token', token);
-      setAdminToken(token);
-      setAdminKey(trimmedInput);
-    } else {
-      setAuthError('Geçersiz güvenlik anahtarı. Erişim reddedildi.');
+    } catch {
+      setAuthError('Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.');
+    } finally {
+      setAuthLoading(false);
     }
   };
+
 
   const handleLogout = () => {
     sessionStorage.removeItem('temiz_admin_token');
@@ -281,14 +272,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (secretKeyInput.trim() && secretKeyInput.trim() !== adminKey) {
-        if (secretKeyInput.trim().length < 6) {
-          alert('Yeni yönetici anahtarı en az 6 karakter olmalıdır.');
-          return;
-        }
-        setAdminKey(secretKeyInput.trim());
-        localStorage.setItem('temiz_admin_key', secretKeyInput.trim());
-      }
+      // Admin key is now server-side only (ADMIN_SECRET_KEY env var on Vercel).
+      // It can no longer be changed from the browser panel.
       await updateSettings(settingsForm);
       setSettingsSavedMessage(true);
       setTimeout(() => setSettingsSavedMessage(false), 3000);
@@ -458,41 +443,38 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
 
           <div>
             <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-widest block">
-              {adminKey ? 'GÜVENLİ YÖNETİM GEÇİDİ' : 'İLK KURULUM MODU'}
+              GÜVENLİ YÖNETİM GEÇİDİ
             </span>
             <h3 className="text-xl font-bold text-zinc-900 dark:text-white mt-1">
-              {adminKey ? 'Yönetici Doğrulaması' : 'Yönetici Anahtarı Belirleyin'}
+              Yönetici Doğrulaması
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-              {adminKey 
-                ? 'Bu portala sadece yetkili şifreli anahtara sahip yöneticiler erişebilir.'
-                : 'Sistemde henüz bir yönetici anahtarı tanımlanmamış. Lütfen güvenli bir şifre belirleyin.'}
+              Bu portala sadece yetkili gizli anahtara sahip yöneticiler erişebilir.
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                {adminKey ? 'Gizli Yönetici Anahtarı (Secret Key)' : 'Yeni Yönetici Anahtarı (En az 6 karakter)'}
+                Gizli Yönetici Anahtarı (Secret Key)
               </label>
               <div className="relative">
                 <Key className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
-                  placeholder={adminKey ? "Gizli anahtarınızı girin..." : "Yeni anahtarınızı oluşturun..."}
+                  placeholder="Gizli anahtarınızı girin..."
                   value={inputKey}
+                  disabled={authLoading}
                   onChange={(e) => {
                     setInputKey(e.target.value);
                     if (authError) setAuthError('');
                   }}
-                  className="w-full pl-10 pr-3 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 font-mono"
+                  className="w-full pl-10 pr-3 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 font-mono disabled:opacity-50"
                 />
               </div>
               <p className="text-[10px] text-zinc-400 mt-1 font-mono">
-                {adminKey 
-                  ? 'Girdiğiniz anahtar tarayıcıda veya sunucuda güvenli doğrulamadan geçirilir.'
-                  : 'Belirlediğiniz bu anahtarı bir yere not edin; sonraki tüm girişlerde bu anahtar istenecektir.'}
+                Anahtarınız sunucu tarafında güvenli şekilde doğrulanır. Tarayıcıda saklanmaz.
               </p>
             </div>
 
@@ -505,15 +487,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-semibold text-xs tracking-wide transition-all shadow-sm cursor-pointer"
+              disabled={authLoading}
+              className="w-full py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-semibold text-xs tracking-wide transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {adminKey ? 'Doğrula ve Panele Gir' : 'Anahtarı Kaydet ve Giriş Yap'}
+              {authLoading ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white dark:border-zinc-900/30 dark:border-t-zinc-900 rounded-full animate-spin" />
+                  Doğrulanıyor...
+                </>
+              ) : 'Doğrula ve Panele Gir'}
             </button>
           </form>
         </div>
       </div>
     );
   }
+
 
   // Authenticated Admin Dashboard Portal
   return (
@@ -2195,13 +2184,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
                       <label className="block text-[11px] text-zinc-600 dark:text-zinc-400 font-medium mb-1">
                         Yönetici Giriş Şifresi (Admin Secret Key)
                       </label>
-                      <input
-                        type="text"
-                        value={secretKeyInput}
-                        onChange={(e) => setSecretKeyInput(e.target.value)}
-                        placeholder="Yeni Yönetici Şifresi..."
-                        className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl font-mono text-xs text-zinc-900 dark:text-white"
-                      />
+                      <div className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-xl text-[11px] text-zinc-500 dark:text-zinc-400 font-mono flex items-center gap-2">
+                        <span className="text-amber-500">🔒</span>
+                        <span>Yönetici anahtarı artık yalnızca Vercel ortam değişkenlerinden (<code className="bg-zinc-200 dark:bg-zinc-700 px-1 rounded text-[10px]">ADMIN_SECRET_KEY</code>) yönetilir. Tarayıcı üzerinden değiştirilemez.</span>
+                      </div>
                     </div>
                   </div>
                 </div>
