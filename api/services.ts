@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from './db';
+import { supabase } from './db.js';
 
 function isAdminAuthed(req: VercelRequest): boolean {
   const token = req.headers['x-admin-token'];
