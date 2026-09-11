@@ -45,23 +45,8 @@ const DEFAULT_COUPONS: Coupon[] = [
   }
 ];
 
-const DEFAULT_ORDERS: Order[] = [
-  {
-    orderCode: 'TK-7K9M-2X4V',
-    customerName: 'Ayşe Kaya',
-    customerPhone: '0 (532) 456 78 90',
-    district: 'Kadıköy',
-    address: 'Moda Cad. No: 42 D: 5, Kadıköy',
-    services: ['Kuru Temizleme', 'Buharlı Pres & Ütü'],
-    pickupDate: '2026-09-08',
-    timeSlot: '10:00 - 13:00',
-    notes: 'Kıyafetler özel askı kılıfında teslim edilsin.',
-    itemsSummary: '2x Takım Elbise, 3x Gömlek',
-    totalAmount: 980,
-    status: 'ironing',
-    createdAt: new Date().toISOString()
-  }
-];
+const DEFAULT_ORDERS: Order[] = [];
+
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<SiteSettings>(() => {

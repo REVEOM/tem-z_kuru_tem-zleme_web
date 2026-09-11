@@ -37,11 +37,14 @@ const getStatusLabel = (status: Order['status']): string => {
   switch (status) {
     case 'pending': return '💬 WhatsApp Onayı Bekliyor';
     case 'confirmed': return '✅ Satış Onaylandı';
-    case 'in_process': return 'Yıkamada';
-    case 'ironing': return 'Ütüde';
-    case 'delivering': return 'Dağıtımda';
-    case 'completed': return 'Tamamlandı';
-    case 'cancelled': return 'İptal';
+    case 'pickup_scheduled': return '📅 Alım Planlandı';
+    case 'picked_up': return '🚗 Alındı / Yolda';
+    case 'washing': return '🫧 Yıkamada';
+    case 'ironing': return '🔥 Ütüde';
+    case 'ready': return '✨ Teslimata Hazır';
+    case 'delivering': return '🚚 Teslimatta';
+    case 'completed': return '✅ Tamamlandı';
+    case 'cancelled': return '❌ İptal';
     default: return status;
   }
 };
@@ -52,10 +55,16 @@ const getStatusBadgeClass = (status: Order['status']): string => {
       return 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 animate-pulse';
     case 'confirmed':
       return 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
-    case 'in_process':
+    case 'pickup_scheduled':
+      return 'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800';
+    case 'picked_up':
+      return 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800';
+    case 'washing':
       return 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800';
     case 'ironing':
       return 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800';
+    case 'ready':
+      return 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800';
     case 'delivering':
       return 'bg-cyan-50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800';
     case 'completed':
@@ -710,10 +719,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
 
                   <div className="space-y-2.5">
                     {[
-                      { status: 'pending', label: 'Bekleyen' },
-                      { status: 'in_process', label: 'Yıkamada' },
+                      { status: 'pending', label: 'Onay Bekliyor' },
+                      { status: 'confirmed', label: 'Onaylandı' },
+                      { status: 'pickup_scheduled', label: 'Alım Planlandı' },
+                      { status: 'picked_up', label: 'Alındı' },
+                      { status: 'washing', label: 'Yıkamada' },
                       { status: 'ironing', label: 'Ütüde' },
-                      { status: 'delivering', label: 'Dağıtımda' },
+                      { status: 'ready', label: 'Hazır' },
+                      { status: 'delivering', label: 'Teslimatta' },
                       { status: 'completed', label: 'Tamamlandı' },
                     ].map((item) => {
                       const count = orders.filter(o => o.status === item.status).length;
@@ -819,11 +832,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
                   {[
                     { id: 'all', label: `Tümü (${orders.length})` },
                     { id: 'whatsapp_pending', label: `🔔 Onay Kutusu (${pendingWhatsAppOrders.length})` },
-                    { id: 'confirmed', label: 'Onaylananlar' },
-                    { id: 'in_process', label: 'Yıkamada' },
-                    { id: 'ironing', label: 'Ütüde' },
-                    { id: 'delivering', label: 'Dağıtımda' },
-                    { id: 'completed', label: 'Tamamlandı' },
+                    { id: 'confirmed', label: '✅ Onaylananlar' },
+                    { id: 'pickup_scheduled', label: '📅 Alım Planlandı' },
+                    { id: 'picked_up', label: '🚗 Alındı' },
+                    { id: 'washing', label: '🫧 Yıkamada' },
+                    { id: 'ironing', label: '🔥 Ütüde' },
+                    { id: 'ready', label: '✨ Hazır' },
+                    { id: 'delivering', label: '🚚 Teslimatta' },
+                    { id: 'completed', label: '✅ Tamamlandı' },
+                    { id: 'cancelled', label: '❌ İptal' },
                   ].map((filter) => (
                     <button
                       key={filter.id}
@@ -1068,11 +1085,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
                           >
                             <option value="pending">💬 WhatsApp Onayı Bekliyor</option>
                             <option value="confirmed">✅ Satış Onaylandı</option>
-                            <option value="in_process">Yıkamada</option>
-                            <option value="ironing">Ütüde</option>
-                            <option value="delivering">Dağıtımda</option>
-                            <option value="completed">Tamamlandı</option>
-                            <option value="cancelled">İptal</option>
+                            <option value="pickup_scheduled">📅 Alım Planlandı</option>
+                            <option value="picked_up">🚗 Alındı / Yolda</option>
+                            <option value="washing">🫧 Yıkamada</option>
+                            <option value="ironing">🔥 Ütüde</option>
+                            <option value="ready">✨ Teslimata Hazır</option>
+                            <option value="delivering">🚚 Teslimatta</option>
+                            <option value="completed">✅ Tamamlandı</option>
+                            <option value="cancelled">❌ İptal</option>
                           </select>
 
                           {/* Delete Order Button */}

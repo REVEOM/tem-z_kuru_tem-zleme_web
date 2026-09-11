@@ -44,7 +44,7 @@ export interface Order {
   totalAmount: number;
   discountAmount?: number;
   couponCode?: string;
-  status: 'pending' | 'confirmed' | 'in_process' | 'ironing' | 'delivering' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'pickup_scheduled' | 'picked_up' | 'washing' | 'ironing' | 'ready' | 'delivering' | 'completed' | 'cancelled';
   createdAt: string;
   isWhatsAppConfirmed?: boolean;
   whatsAppConfirmedAt?: string;

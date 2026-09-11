@@ -182,11 +182,14 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ initialCode }) => 
     switch (status) {
       case 'pending':
       case 'confirmed':
+      case 'pickup_scheduled':
         return 0;
-      case 'in_process':
+      case 'picked_up':
+      case 'washing':
         return 1;
       case 'ironing':
         return 2;
+      case 'ready':
       case 'delivering':
         return 3;
       case 'completed':
@@ -203,18 +206,24 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ initialCode }) => 
       id: 0,
       title: currentOrder?.status === 'pending'
         ? 'Talep Alındı'
+        : currentOrder?.status === 'pickup_scheduled'
+        ? 'Alım Planlandı'
         : 'Sipariş Onaylandı',
       desc: currentOrder?.status === 'pending'
         ? 'Sipariş talebiniz oluşturuldu, WhatsApp onay kutusunda onay bekliyor.'
+        : currentOrder?.status === 'pickup_scheduled'
+        ? 'Alım randevunuz planlandı. Ekibimiz belirtilen saatte kapınıza gelecek.'
         : 'Siparişiniz onaylandı, alım randevu saatinizde kapınızdan teslim alınacak.',
-      time: currentOrder?.pickupDate ? `${currentOrder.pickupDate} (${currentOrder.timeSlot || '09:00 - 12:00'})` : 'Planlandı',
+      time: currentOrder?.pickupDate ? `${currentOrder.pickupDate} (${currentOrder.timeSlot || '—'})` : 'Planlandı',
       icon: PackageCheck
     },
     {
       id: 1,
-      title: 'Ekolojik Temizleme',
-      desc: 'Kumaş liflerine özel ekolojik leke çıkarma ve temizlik işlemleri uygulanıyor.',
-      time: currentOrder?.status === 'in_process' ? 'Şu An İşlemde' : 'Aşama 2',
+      title: currentOrder?.status === 'picked_up' ? 'Alındı, Yolda' : 'Ekolojik Temizleme',
+      desc: currentOrder?.status === 'picked_up'
+        ? 'Kıyafetleriniz kapınızdan alındı, temizleme merkezine ulaştırılıyor.'
+        : 'Kumaş liflerine özel ekolojik leke çıkarma ve temizlik işlemleri uygulanıyor.',
+      time: (currentOrder?.status === 'picked_up' || currentOrder?.status === 'washing') ? 'Şu An İşlemde' : 'Aşama 2',
       icon: Sparkles
     },
     {
@@ -226,10 +235,19 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ initialCode }) => 
     },
     {
       id: 3,
-      title: 'Kapınıza Teslimat',
-      desc: 'Özel hijyenik askılı koruma kılıfında adresinize ulaştırılıyor.',
-      time: currentOrder?.status === 'delivering' ? 'Dağıtımda' : 'Son Aşama',
+      title: currentOrder?.status === 'ready' ? 'Teslimata Hazır' : 'Kapınıza Teslimat',
+      desc: currentOrder?.status === 'ready'
+        ? 'Kıyafetleriniz özenle hazırlandı, teslimat için sıraya alındı.'
+        : 'Özel hijyenik askılı koruma kılıfında adresinize ulaştırılıyor.',
+      time: currentOrder?.status === 'delivering' ? 'Yolda' : currentOrder?.status === 'ready' ? 'Hazır' : 'Son Aşama',
       icon: CheckCircle2
+    },
+    {
+      id: 4,
+      title: 'Teslim Edildi ✓',
+      desc: 'Kıyafetleriniz başarıyla teslim edildi. Bizi tercih ettiğiniz için teşekkür ederiz!',
+      time: currentOrder?.status === 'completed' ? 'Tamamlandı 🎉' : '—',
+      icon: CheckCircle
     }
   ];
 
@@ -274,7 +292,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ initialCode }) => 
                     setSearchInput(e.target.value.toUpperCase());
                     if (searchError) setSearchError(null);
                   }}
-                  placeholder="Takip kodunu yazınız (Örn: TK-7K9M-2X4V)"
+                  placeholder="Takip kodunuzu girin (Örn: TK-XXXX-XXXX)"
                   className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 rounded-2xl text-sm sm:text-base font-mono font-bold text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1475bc] uppercase tracking-wider shadow-inner transition-all"
                 />
               </div>
@@ -417,7 +435,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ initialCode }) => 
                     Aşama Durumu
                   </span>
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#1475bc]/10 dark:bg-[#1475bc]/20 text-[#1475bc] dark:text-[#38a3f5] border border-[#1475bc]/30">
-                    {trackingSteps[Math.min(3, activeStep)].title}
+                    {trackingSteps[Math.min(4, activeStep)].title}
                   </span>
                 </div>
               </div>
@@ -444,7 +462,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ initialCode }) => 
                   {/* Active Fill Line */}
                   <div 
                     className="absolute top-5 left-0 h-1 bg-[#1475bc] -translate-y-1/2 rounded-full transition-all duration-500 shadow-sm shadow-[#1475bc]/30"
-                    style={{ width: `${Math.min(100, (activeStep / 3) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (activeStep / 4) * 100)}%` }}
                   />
 
                   {/* Steps */}

@@ -30,7 +30,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [cart]);
 
   const addToCart = (item: PriceItem, serviceType: 'full' | 'iron' = 'full') => {
-    playBubblePop(1.1);
+    try { playBubblePop(1.1); } catch { /* audio blocked or unavailable */ }
     const key = `${item.id}_${serviceType}`;
     setCart((prev) => {
       const existing = prev[key];
@@ -47,7 +47,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateQuantity = (key: string, delta: number) => {
-    playBubblePop(0.95);
+    try { playBubblePop(0.95); } catch { /* audio blocked or unavailable */ }
     setCart((prev) => {
       const existing = prev[key];
       if (!existing) return prev;

@@ -40,7 +40,7 @@ const OrderSchema = new Schema<IOrder>({
   couponCode: String,
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'pickup_scheduled', 'picked_up', 'washing', 'ironing', 'ready', 'delivered', 'cancelled'],
+    enum: ['pending', 'confirmed', 'pickup_scheduled', 'picked_up', 'washing', 'ironing', 'ready', 'delivering', 'completed', 'cancelled'],
     default: 'pending'
   },
   isWhatsAppConfirmed: { type: Boolean, default: false },

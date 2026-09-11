@@ -28,7 +28,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
               </div>
               <div className="flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                <a href={`tel:${settings.phoneRaw}`} className="hover:text-zinc-900 dark:hover:text-white transition-colors">
+                <a href={`tel:${settings.phoneRaw || (settings.phone || '').replace(/\D/g, '')}`} className="hover:text-zinc-900 dark:hover:text-white transition-colors">
                   {settings.phone}
                 </a>
               </div>

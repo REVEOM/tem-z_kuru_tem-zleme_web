@@ -25,12 +25,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { totalCount, subtotalAmount } = useCart();
   const [logoClicks, setLogoClicks] = useState(0);
 
+  const logoClickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleLogoSecretClick = (e: React.MouseEvent) => {
     const next = logoClicks + 1;
     setLogoClicks(next);
-    if (next >= 4) {
+    // Reset counter after 2 seconds of inactivity
+    if (logoClickTimerRef.current) clearTimeout(logoClickTimerRef.current);
+    logoClickTimerRef.current = setTimeout(() => setLogoClicks(0), 2000);
+    if (next >= 7) {
       e.preventDefault();
       setLogoClicks(0);
+      if (logoClickTimerRef.current) clearTimeout(logoClickTimerRef.current);
       if (onOpenAdmin) onOpenAdmin();
     }
   };
@@ -74,7 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <div className="hidden sm:flex items-center gap-4 text-xs font-medium">
               <a 
-                href={`tel:${settings.phoneRaw || settings.phone.replace(/\D/g, '')}`} 
+                href={`tel:${settings.phoneRaw || (settings.phone || '').replace(/\D/g, '')}`} 
                 className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 hover:text-[#1475bc] dark:hover:text-[#38a3f5] transition-colors"
               >
                 <Phone className="w-3.5 h-3.5 text-zinc-500" />

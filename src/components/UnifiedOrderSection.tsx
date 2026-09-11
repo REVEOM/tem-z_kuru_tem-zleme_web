@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Search, Plus, Minus, Trash2, ShoppingBag, Truck, Calendar, Clock, 
   MapPin, User, Phone, MessageCircle, Tag, 
-  ArrowRight, Sparkles, Zap, ChevronRight
+  ArrowRight, Sparkles, Zap, ChevronRight, CheckCircle2, X
 } from 'lucide-react';
 import { useSettings } from '../context/useSettings';
 import { CATEGORIES } from '../data/pricing';
@@ -94,26 +94,37 @@ export const UnifiedOrderSection: React.FC<UnifiedOrderSectionProps> = ({
   const handleClearCart = () => {
     clearCart();
     setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponMsg(null);
   };
 
   const handleApplyCoupon = () => {
     setCouponMsg(null);
-    if (!couponInput.trim()) {
-      setCouponMsg({ text: 'Lütfen bir indirim kodu giriniz.', isError: true });
+    const cleanInput = couponInput.trim().toUpperCase();
+    if (!cleanInput) {
+      // Empty input is completely allowed and valid (coupon is optional)
+      setAppliedCoupon(null);
+      setCouponMsg(null);
       return;
     }
     if (subtotalAmount === 0) {
       setCouponMsg({ text: 'Kupon uygulamak için önce sepetinize ürün ekleyin.', isError: true });
       return;
     }
-    const res = applyCoupon(couponInput, subtotalAmount);
+    const res = applyCoupon(cleanInput, subtotalAmount);
     if (res.valid) {
-      setAppliedCoupon({ code: couponInput.trim().toUpperCase(), discountAmount: res.discountAmount });
+      setAppliedCoupon({ code: cleanInput, discountAmount: res.discountAmount });
       setCouponMsg({ text: res.message, isError: false });
     } else {
       setAppliedCoupon(null);
       setCouponMsg({ text: res.message, isError: true });
     }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponMsg(null);
   };
 
   const handleQuickDateSelect = (daysFromToday: number) => {
@@ -760,27 +771,63 @@ export const UnifiedOrderSection: React.FC<UnifiedOrderSectionProps> = ({
                         </div>
                       )}
 
-                      {/* Coupon Box */}
+                      {/* Coupon Box (100% Optional) */}
                       <div className="pt-2">
-                        <div className="flex gap-2">
-                          <div className="relative flex-1">
-                            <Tag className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <input
-                              type="text"
-                              placeholder="İndirim Kuponu (Örn: BAHAR15)"
-                              value={couponInput}
-                              onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                              className="w-full pl-8 pr-3 py-1.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs uppercase text-zinc-900 dark:text-white"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleApplyCoupon}
-                            className="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"
-                          >
-                            Uygula
-                          </button>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                            İndirim Kuponu <span className="text-[10px] text-zinc-400 font-normal">(İsteğe Bağlı / Opsiyonel)</span>
+                          </span>
                         </div>
+
+                        {appliedCoupon ? (
+                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs">
+                            <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Kupon Aktif: <strong>{appliedCoupon.code}</strong> (-₺{discountAmount})</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleRemoveCoupon}
+                              className="text-xs text-rose-500 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Kaldır</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <div className="relative flex-1">
+                              <Tag className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                              <input
+                                type="text"
+                                placeholder="Varsa kupon kodu (Boş bırakabilirsiniz)"
+                                value={couponInput}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleApplyCoupon();
+                                  }
+                                }}
+                                onChange={(e) => {
+                                  const val = e.target.value.toUpperCase();
+                                  setCouponInput(val);
+                                  if (!val.trim()) {
+                                    setCouponMsg(null);
+                                  }
+                                }}
+                                className="w-full pl-8 pr-3 py-1.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs uppercase text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleApplyCoupon}
+                              disabled={!couponInput.trim()}
+                              className="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-opacity"
+                            >
+                              Uygula
+                            </button>
+                          </div>
+                        )}
 
                         {couponMsg && (
                           <div className={`text-[11px] mt-1.5 font-medium ${couponMsg.isError ? 'text-rose-500' : 'text-emerald-500'}`}>
