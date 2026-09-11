@@ -264,7 +264,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
         setAuthError(err.error || 'Geçersiz güvenlik anahtarı. Erişim reddedildi.');
       }
     } catch (error: any) {
-      setAuthError('Bağlantı hatası: ' + (error instanceof Error ? error.message : 'Sunucu yanıt vermedi.'));
+      setAuthError('Sisteme bağlanılamadı. Lütfen ağ bağlantınızı kontrol edip tekrar deneyin.');
     } finally {
       setAuthLoading(false);
     }
