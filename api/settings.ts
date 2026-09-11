@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectDB } from './db';
-import { SiteSettingsModel } from './models';
+import { supabase } from './db';
 
 function isAdminAuthed(req: VercelRequest): boolean {
   const token = req.headers['x-admin-token'];
@@ -8,6 +7,7 @@ function isAdminAuthed(req: VercelRequest): boolean {
 }
 
 const DEFAULT_SETTINGS = {
+  _key: 'singleton',
   phone: '0 (555) 123 45 67',
   phoneRaw: '+905551234567',
   whatsapp: '905551234567',
@@ -28,22 +28,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'no-store');
 
-  try {
-    await connectDB();
-  } catch {
-    return res.status(503).json({ error: 'Veritabanına bağlanılamadı.' });
-  }
-
   // ── GET /api/settings  (public — returns site settings for UI)
   if (req.method === 'GET') {
-    let doc = await SiteSettingsModel.findOne({ _key: 'singleton' }).lean();
-    if (!doc) {
+    let { data: doc, error } = await supabase
+      .from('site_settings')
+      .select('*')
+      .eq('_key', 'singleton')
+      .single();
+      
+    if (error || !doc) {
       // Seed defaults on first fetch
-      doc = await SiteSettingsModel.create({ _key: 'singleton', ...DEFAULT_SETTINGS });
+      const { data: newDoc, error: insertError } = await supabase
+        .from('site_settings')
+        .insert([DEFAULT_SETTINGS])
+        .select()
+        .single();
+        
+      if (!insertError && newDoc) {
+        doc = newDoc;
+      } else {
+        doc = DEFAULT_SETTINGS;
+      }
     }
+    
     // Remove internal fields before returning
-    const { _id, __v, _key, ...publicSettings } = doc as unknown as Record<string, unknown>;
-    void _id; void __v; void _key;
+    const { id, _key, ...publicSettings } = doc;
+    void id; void _key;
     return res.status(200).json(publicSettings);
   }
 
@@ -53,11 +63,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Yetkisiz erişim.' });
     }
     const body = req.body as Record<string, unknown>;
-    const updated = await SiteSettingsModel.findOneAndUpdate(
-      { _key: 'singleton' },
-      { $set: body },
-      { new: true, upsert: true }
-    ).lean();
+    
+    // UPSERT singleton
+    const { data: updated, error } = await supabase
+      .from('site_settings')
+      .upsert({ _key: 'singleton', ...body }, { onConflict: '_key' })
+      .select()
+      .single();
+      
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    
     return res.status(200).json({ success: true, settings: updated });
   }
 

@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectDB } from './db';
-import { PricingItemModel } from './models';
+import { supabase } from './db';
 
 function isAdminAuthed(req: VercelRequest): boolean {
   const token = req.headers['x-admin-token'];
@@ -11,15 +10,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'no-store');
 
-  try {
-    await connectDB();
-  } catch {
-    return res.status(503).json({ error: 'Veritabanına bağlanılamadı.' });
-  }
-
   // ── GET /api/pricing  (public)
   if (req.method === 'GET') {
-    const items = await PricingItemModel.find({ active: { $ne: false } }).sort({ category: 1, name: 1 }).lean();
+    const { data: items, error } = await supabase
+      .from('pricing_items')
+      .select('*')
+      .neq('active', false)
+      .order('category')
+      .order('name');
+      
+    if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json(items);
   }
 
@@ -32,11 +32,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!item?.id || !item?.name) {
       return res.status(400).json({ error: 'id ve name alanları zorunludur.' });
     }
-    const created = await PricingItemModel.findOneAndUpdate(
-      { id: item.id },
-      { $set: item },
-      { new: true, upsert: true }
-    ).lean();
+    
+    // UPSERT
+    const { data: created, error } = await supabase
+      .from('pricing_items')
+      .upsert(item, { onConflict: 'id' })
+      .select()
+      .single();
+      
+    if (error) return res.status(500).json({ error: error.message });
     return res.status(201).json({ success: true, item: created });
   }
 
@@ -49,13 +53,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!item.id) {
       return res.status(400).json({ error: 'id alanı zorunludur.' });
     }
-    const updated = await PricingItemModel.findOneAndUpdate(
-      { id: item.id },
-      { $set: item },
-      { new: true }
-    ).lean();
-    if (!updated) {
-      return res.status(404).json({ error: 'Fiyat kalemi bulunamadı.' });
+
+    const { data: updated, error } = await supabase
+      .from('pricing_items')
+      .update(item)
+      .eq('id', item.id)
+      .select()
+      .single();
+      
+    if (error || !updated) {
+      return res.status(404).json({ error: 'Fiyat kalemi bulunamadı veya güncellenemedi.' });
     }
     return res.status(200).json({ success: true, item: updated });
   }
@@ -69,7 +76,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!id) {
       return res.status(400).json({ error: 'id parametresi gerekli.' });
     }
-    await PricingItemModel.deleteOne({ id });
+    const { error } = await supabase.from('pricing_items').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
   }
 

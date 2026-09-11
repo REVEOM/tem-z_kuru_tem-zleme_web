@@ -1,40 +1,10 @@
-import mongoose from 'mongoose';
+import { createClient } from '@supabase/supabase-js';
 
-const MONGODB_URI = process.env.MONGODB_URI || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 
-if (!MONGODB_URI) {
-  throw new Error('MONGODB_URI ortam değişkeni tanımlanmamış.');
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('SUPABASE_URL ve SUPABASE_ANON_KEY ortam değişkenleri eksik.');
 }
 
-interface MongooseCache {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
-}
-
-// Global cache to reuse connection across serverless invocations
-const globalWithMongoose = global as typeof globalThis & { mongoose?: MongooseCache };
-
-let cached: MongooseCache = globalWithMongoose.mongoose ?? { conn: null, promise: null };
-if (!globalWithMongoose.mongoose) {
-  globalWithMongoose.mongoose = cached;
-}
-
-export async function connectDB(): Promise<typeof mongoose> {
-  if (cached.conn) return cached.conn;
-
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      bufferCommands: false,
-      serverSelectionTimeoutMS: 5000,
-    });
-  }
-
-  try {
-    cached.conn = await cached.promise;
-  } catch (err) {
-    cached.promise = null;
-    throw err;
-  }
-
-  return cached.conn;
-}
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

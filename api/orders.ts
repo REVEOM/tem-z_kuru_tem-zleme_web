@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectDB } from './db';
-import { OrderModel } from './models';
+import { supabase } from './db';
 
 // Verify admin token header
 function isAdminAuthed(req: VercelRequest): boolean {
@@ -13,17 +12,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'no-store');
 
-  try {
-    await connectDB();
-  } catch {
-    return res.status(503).json({ error: 'Veritabanına bağlanılamadı.' });
-  }
-
   // ── GET /api/orders?code=TK-XXXX-XXXX  (public — single order tracking)
   if (req.method === 'GET' && req.query.code) {
     const code = (req.query.code as string).trim().toUpperCase();
-    const order = await OrderModel.findOne({ orderCode: code }).lean();
-    if (!order) {
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('orderCode', code)
+      .single();
+    
+    if (error || !order) {
       return res.status(404).json({ error: 'Sipariş bulunamadı.' });
     }
     // Return only safe fields for public tracking (no PII raw data for non-admins)
@@ -35,7 +33,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!isAdminAuthed(req)) {
       return res.status(401).json({ error: 'Yetkisiz erişim.' });
     }
-    const orders = await OrderModel.find({}).sort({ createdAt: -1 }).lean();
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('createdAt', { ascending: false });
+      
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
     return res.status(200).json(orders);
   }
 
@@ -47,12 +52,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Check for duplicate order code
-    const existing = await OrderModel.findOne({ orderCode: body.orderCode });
+    const { data: existing } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('orderCode', body.orderCode)
+      .single();
+      
     if (existing) {
       return res.status(409).json({ error: 'Bu sipariş kodu zaten kayıtlı.' });
     }
 
-    const order = await OrderModel.create(body);
+    const { data: order, error } = await supabase
+      .from('orders')
+      .insert([body])
+      .select()
+      .single();
+      
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
     return res.status(201).json({ success: true, order });
   }
 
@@ -65,13 +83,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!orderCode) {
       return res.status(400).json({ error: 'orderCode gerekli.' });
     }
-    const updated = await OrderModel.findOneAndUpdate(
-      { orderCode },
-      { $set: updateFields },
-      { new: true }
-    ).lean();
-    if (!updated) {
-      return res.status(404).json({ error: 'Sipariş bulunamadı.' });
+    
+    const { data: updated, error } = await supabase
+      .from('orders')
+      .update(updateFields)
+      .eq('orderCode', orderCode)
+      .select()
+      .single();
+      
+    if (error || !updated) {
+      return res.status(404).json({ error: 'Sipariş bulunamadı veya güncellenemedi.' });
     }
     return res.status(200).json({ success: true, order: updated });
   }
@@ -83,14 +104,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Yetkisiz erişim.' });
     }
     if (req.query.clearAll === 'true') {
-      await OrderModel.deleteMany({});
+      const { error } = await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ success: true, message: 'Tüm siparişler silindi.' });
     }
+    
     const code = (req.query.code as string | undefined)?.trim().toUpperCase();
     if (!code) {
       return res.status(400).json({ error: 'Silinecek sipariş kodu gerekli.' });
     }
-    await OrderModel.deleteOne({ orderCode: code });
+    const { error } = await supabase.from('orders').delete().eq('orderCode', code);
+    if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
   }
 
