@@ -9,7 +9,7 @@ import crypto from 'crypto';
  * The admin key ONLY lives in process.env.ADMIN_SECRET_KEY (server-side).
  * It is NEVER sent to the browser, never in localStorage, never in source code.
  */
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'no-store');
@@ -46,10 +46,10 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!match) {
     // Artificial delay to slow down brute force
-    return new Promise<void>((resolve) => setTimeout(() => {
+    await new Promise<void>((resolve) => setTimeout(() => {
       res.status(401).json({ error: 'Geçersiz güvenlik anahtarı. Erişim reddedildi.' });
       resolve();
-    }, 800));
+    }, 800)); return;
   }
 
   // Generate a cryptographically secure session token

@@ -198,7 +198,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
 
       setIsAddingService(false);
       setEditingService(null);
-    } catch {
+    } catch (error: any) {
       alert('Hizmet kaydedilirken bir hata oluştu. Lütfen tekrar deneyiniz.');
     }
   };
@@ -263,8 +263,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
         const err = await res.json() as { error?: string };
         setAuthError(err.error || 'Geçersiz güvenlik anahtarı. Erişim reddedildi.');
       }
-    } catch {
-      setAuthError('Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.');
+    } catch (error: any) {
+      setAuthError('Bağlantı hatası: ' + (error instanceof Error ? error.message : 'Sunucu yanıt vermedi.'));
     } finally {
       setAuthLoading(false);
     }
@@ -286,7 +286,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
       await updateSettings(settingsForm);
       setSettingsSavedMessage(true);
       setTimeout(() => setSettingsSavedMessage(false), 3000);
-    } catch {
+    } catch (error: any) {
       alert('Ayarlar kaydedilirken bir hata oluştu. Lütfen tekrar deneyiniz.');
     }
   };
@@ -1435,7 +1435,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
                             await addPriceItem({ ...newPriceItem, id } as PriceItem);
                             setIsAddingPrice(false);
                           }
-                        } catch {
+                        } catch (error: any) {
                           alert('Ürün kaydedilirken bir hata oluştu.');
                         }
                       }}
@@ -1659,7 +1659,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
                             description: '',
                             expiryDate: '2026-12-31'
                           });
-                        } catch {
+                        } catch (error: any) {
                           alert('Kupon eklenirken bir hata oluştu.');
                         }
                       }}
