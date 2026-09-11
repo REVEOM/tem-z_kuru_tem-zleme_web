@@ -87,21 +87,23 @@ export const ContactSection: React.FC = () => {
             </h3>
 
             <div className="space-y-2.5 text-xs text-zinc-600 dark:text-zinc-300">
-              <div className="flex items-center gap-2.5">
-                <Clock className="w-4 h-4 text-zinc-400" />
-                <div>
-                  <div className="font-semibold text-zinc-900 dark:text-white">Pazartesi — Cumartesi</div>
-                  <div className="text-[11px] text-zinc-500">{settings.workingHoursWeekday} (Servis Saatleri)</div>
+              {settings.workingHoursWeekday && (
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 text-zinc-400" />
+                  <div className="font-semibold text-zinc-900 dark:text-white">
+                    {settings.workingHoursWeekday}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="flex items-center gap-2.5">
-                <Clock className="w-4 h-4 text-zinc-400" />
-                <div>
-                  <div className="font-semibold text-zinc-500">Pazar Günü</div>
-                  <div className="text-[11px] text-zinc-400">{settings.workingHoursWeekend}</div>
+              {settings.workingHoursWeekend && (
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 text-zinc-400" />
+                  <div className="font-semibold text-zinc-500">
+                    {settings.workingHoursWeekend}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800">

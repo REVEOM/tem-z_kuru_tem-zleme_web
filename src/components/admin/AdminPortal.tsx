@@ -2073,29 +2073,24 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
 
                 {/* 4. Hours */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-zinc-700 dark:text-zinc-300 font-medium mb-1.5">
-                      Hafta İçi Çalışma Saatleri
-                    </label>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">1. Çalışma Saati Metni (Örn: Pzt-Cmt: 08:30-20:00)</label>
                     <input
                       type="text"
                       value={settingsForm.workingHoursWeekday}
                       onChange={(e) => setSettingsForm({ ...settingsForm, workingHoursWeekday: e.target.value })}
-                      placeholder="08:30 – 20:00"
-                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl"
+                      className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-zinc-700 dark:text-zinc-300 font-medium mb-1.5">
-                      Hafta Sonu Saatleri
-                    </label>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">2. Çalışma Saati Metni (İsteğe bağlı, boş bırakabilirsiniz)</label>
                     <input
                       type="text"
                       value={settingsForm.workingHoursWeekend}
                       onChange={(e) => setSettingsForm({ ...settingsForm, workingHoursWeekend: e.target.value })}
-                      placeholder="Kapalı (Online Siparişler Açıktır)"
-                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl"
+                      className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs"
+                      placeholder="Örn: Pazar: Kapalı"
                     />
                   </div>
                 </div>

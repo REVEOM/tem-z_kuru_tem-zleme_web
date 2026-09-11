@@ -74,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
               <span className="hidden md:inline text-zinc-400 dark:text-zinc-600">|</span>
               <span className="hidden md:inline text-zinc-500 dark:text-zinc-400">
-                Pzt — Cmt: {settings.workingHoursWeekday}
+                {settings.workingHoursWeekday}
               </span>
             </div>
 
