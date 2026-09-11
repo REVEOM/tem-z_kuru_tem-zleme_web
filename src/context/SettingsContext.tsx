@@ -49,11 +49,12 @@ const DEFAULT_ORDERS: Order[] = [];
 
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [settings, setSettings] = useState<SiteSettings>(() => {
     try {
       const saved = localStorage.getItem('temiz_site_settings');
       if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
-    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
+    } catch {
       localStorage.removeItem('temiz_site_settings');
     }
     return DEFAULT_SETTINGS;
@@ -183,8 +184,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           fetchCoupons(),
           adminToken ? fetchOrders() : Promise.resolve()
         ]);
-      } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
+      } catch {
         // Fallback handled inside functions
+      } finally {
+        setIsLoaded(true);
       }
     };
 
@@ -628,7 +631,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         fetchSettings,
       }}
     >
-      {children}
+      {!isLoaded ? (
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : children}
     </SettingsContext.Provider>
   );
 };
