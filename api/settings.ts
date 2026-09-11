@@ -42,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       doc = await SiteSettingsModel.create({ _key: 'singleton', ...DEFAULT_SETTINGS });
     }
     // Remove internal fields before returning
-    const { _id, __v, _key, ...publicSettings } = doc as Record<string, unknown>;
+    const { _id, __v, _key, ...publicSettings } = doc as unknown as Record<string, unknown>;
     void _id; void __v; void _key;
     return res.status(200).json(publicSettings);
   }
