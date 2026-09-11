@@ -145,12 +145,42 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  // 4. Fetch services
+  const fetchServices = async () => {
+    try {
+      const res = await fetch('/api/services');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setServices(data);
+          localStorage.setItem('temiz_services', JSON.stringify(data));
+        }
+      }
+    } catch {}
+  };
+
+  // 5. Fetch coupons
+  const fetchCoupons = async () => {
+    try {
+      const res = await fetch('/api/coupons');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setCoupons(data);
+          localStorage.setItem('temiz_coupons', JSON.stringify(data));
+        }
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     const initData = async () => {
       try {
         await Promise.allSettled([
           fetchSettings(),
           fetchPrices(),
+          fetchServices(),
+          fetchCoupons(),
           adminToken ? fetchOrders() : Promise.resolve()
         ]);
       } catch {
@@ -247,6 +277,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updated = services.map(s => s.id === item.id ? item : s);
     setServices(updated);
     localStorage.setItem('temiz_services', JSON.stringify(updated));
+    try {
+      await fetch('/api/services', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken || '' },
+        body: JSON.stringify(item)
+      });
+    } catch {}
     return true;
   };
 
@@ -255,6 +292,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updated = [...services, item];
     setServices(updated);
     localStorage.setItem('temiz_services', JSON.stringify(updated));
+    try {
+      await fetch('/api/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken || '' },
+        body: JSON.stringify({ item })
+      });
+    } catch {}
     return true;
   };
 
@@ -263,6 +307,12 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updated = services.filter(s => s.id !== id);
     setServices(updated);
     localStorage.setItem('temiz_services', JSON.stringify(updated));
+    try {
+      await fetch(`/api/services?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-token': adminToken || '' }
+      });
+    } catch {}
     return true;
   };
 
@@ -472,6 +522,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updated = [...coupons.filter(c => c.code.toUpperCase() !== coupon.code.toUpperCase()), coupon];
     setCoupons(updated);
     localStorage.setItem('temiz_coupons', JSON.stringify(updated));
+    try {
+      await fetch('/api/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken || '' },
+        body: JSON.stringify({ item: coupon })
+      });
+    } catch {}
     return true;
   };
 
@@ -479,6 +536,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updated = coupons.map(c => c.code.toUpperCase() === coupon.code.toUpperCase() ? coupon : c);
     setCoupons(updated);
     localStorage.setItem('temiz_coupons', JSON.stringify(updated));
+    try {
+      await fetch('/api/coupons', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken || '' },
+        body: JSON.stringify(coupon)
+      });
+    } catch {}
     return true;
   };
 
@@ -486,6 +550,12 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updated = coupons.filter(c => c.code.toUpperCase() !== code.toUpperCase());
     setCoupons(updated);
     localStorage.setItem('temiz_coupons', JSON.stringify(updated));
+    try {
+      await fetch(`/api/coupons?code=${code}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-token': adminToken || '' }
+      });
+    } catch {}
     return true;
   };
 
