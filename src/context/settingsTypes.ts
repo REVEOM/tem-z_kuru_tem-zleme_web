@@ -19,8 +19,17 @@ export interface SiteSettings {
   whatsapp: string;
   email: string;
   address: string;
-  workingHoursWeekday: string;
-  workingHoursWeekend: string;
+  workingHoursWeekday: string; // Legacy
+  workingHoursWeekend: string; // Legacy
+  workingHours?: {
+    monday: string;
+    tuesday: string;
+    wednesday: string;
+    thursday: string;
+    friday: string;
+    saturday: string;
+    sunday: string;
+  };
   freeShippingLimit: number;
   districts: string[];
   adminGateSlug: string;

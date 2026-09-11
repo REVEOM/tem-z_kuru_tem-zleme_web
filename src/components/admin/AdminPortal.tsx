@@ -2073,25 +2073,39 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
 
                 {/* 4. Hours */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">1. Çalışma Saati Metni (Örn: Pzt-Cmt: 08:30-20:00)</label>
-                    <input
-                      type="text"
-                      value={settingsForm.workingHoursWeekday}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, workingHoursWeekday: e.target.value })}
-                      className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">2. Çalışma Saati Metni (İsteğe bağlı, boş bırakabilirsiniz)</label>
-                    <input
-                      type="text"
-                      value={settingsForm.workingHoursWeekend}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, workingHoursWeekend: e.target.value })}
-                      className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs"
-                      placeholder="Örn: Pazar: Kapalı"
-                    />
+                  <div className="col-span-1 sm:col-span-2 space-y-3">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Detaylı Çalışma Saatleri (Haftanın 7 Günü)</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4">
+                      
+                      {[
+                        { key: 'monday', label: 'Pazartesi' },
+                        { key: 'tuesday', label: 'Salı' },
+                        { key: 'wednesday', label: 'Çarşamba' },
+                        { key: 'thursday', label: 'Perşembe' },
+                        { key: 'friday', label: 'Cuma' },
+                        { key: 'saturday', label: 'Cumartesi' },
+                        { key: 'sunday', label: 'Pazar' }
+                      ].map((day) => (
+                        <div key={day.key} className="flex items-center gap-3">
+                          <label className="w-20 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">{day.label}</label>
+                          <input
+                            type="text"
+                            value={settingsForm.workingHours?.[day.key as keyof typeof settingsForm.workingHours] || ''}
+                            onChange={(e) => setSettingsForm({
+                              ...settingsForm,
+                              workingHours: {
+                                ...(settingsForm.workingHours || {
+                                  monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '', sunday: ''
+                                }),
+                                [day.key]: e.target.value
+                              }
+                            })}
+                            className="flex-1 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-[11px]"
+                            placeholder="Örn: 08:30 - 20:00 veya Kapalı"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

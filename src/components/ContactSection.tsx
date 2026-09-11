@@ -86,21 +86,33 @@ export const ContactSection: React.FC = () => {
               Çalışma Saatleri & Servis Bölgeleri
             </h3>
 
-            <div className="space-y-2.5 text-xs text-zinc-600 dark:text-zinc-300">
-              {settings.workingHoursWeekday && (
-                <div className="flex items-center gap-2.5">
+            <div className="space-y-1.5 text-xs text-zinc-600 dark:text-zinc-300">
+              {(settings.workingHours ? [
+                { label: 'Pazartesi', value: settings.workingHours.monday },
+                { label: 'Salı', value: settings.workingHours.tuesday },
+                { label: 'Çarşamba', value: settings.workingHours.wednesday },
+                { label: 'Perşembe', value: settings.workingHours.thursday },
+                { label: 'Cuma', value: settings.workingHours.friday },
+                { label: 'Cumartesi', value: settings.workingHours.saturday },
+                { label: 'Pazar', value: settings.workingHours.sunday }
+              ] : []).map((day) => (
+                <div key={day.label} className="flex items-center justify-between py-1 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                    <span className="font-medium text-zinc-700 dark:text-zinc-400">{day.label}</span>
+                  </div>
+                  <span className={`font-semibold ${day.value.toLowerCase().includes('kapalı') ? 'text-rose-500' : 'text-zinc-900 dark:text-white'}`}>
+                    {day.value}
+                  </span>
+                </div>
+              ))}
+
+              {/* Fallback for legacy (if workingHours object doesn't exist yet) */}
+              {!settings.workingHours && settings.workingHoursWeekday && (
+                <div className="flex items-center gap-2.5 py-1">
                   <Clock className="w-4 h-4 text-zinc-400" />
                   <div className="font-semibold text-zinc-900 dark:text-white">
                     {settings.workingHoursWeekday}
-                  </div>
-                </div>
-              )}
-
-              {settings.workingHoursWeekend && (
-                <div className="flex items-center gap-2.5">
-                  <Clock className="w-4 h-4 text-zinc-400" />
-                  <div className="font-semibold text-zinc-500">
-                    {settings.workingHoursWeekend}
                   </div>
                 </div>
               )}

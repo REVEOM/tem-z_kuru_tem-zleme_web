@@ -15,8 +15,17 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsapp: '905551234567',
   email: 'info@temizkurutemizleme.com',
   address: 'Bağdat Caddesi No: 184/A Erenköy, Kadıköy / İstanbul',
-  workingHoursWeekday: '08:30 – 20:00',
-  workingHoursWeekend: 'Kapalı (Online Siparişler Açıktır)',
+  workingHoursWeekday: '08:30 – 20:00', // Legacy
+  workingHoursWeekend: 'Kapalı (Online Siparişler Açıktır)', // Legacy
+  workingHours: {
+    monday: '08:30 - 20:00',
+    tuesday: '08:30 - 20:00',
+    wednesday: '08:30 - 20:00',
+    thursday: '08:30 - 20:00',
+    friday: '08:30 - 20:00',
+    saturday: '08:30 - 20:00',
+    sunday: 'Kapalı'
+  },
   freeShippingLimit: 350,
   districts: ['Kadıköy', 'Ataşehir', 'Üsküdar', 'Maltepe', 'Kartal', 'Beşiktaş', 'Şişli', 'Sarıyer', 'Bakırköy', 'Beyoğlu'],
   adminGateSlug: 'gate_7f9a8b1c4e2d309',
