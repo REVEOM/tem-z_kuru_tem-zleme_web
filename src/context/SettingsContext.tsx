@@ -53,7 +53,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const saved = localStorage.getItem('temiz_site_settings');
       if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       localStorage.removeItem('temiz_site_settings');
     }
     return DEFAULT_SETTINGS;
@@ -105,7 +105,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSettings(prev => ({ ...prev, ...data }));
         localStorage.setItem('temiz_site_settings', JSON.stringify(data));
       }
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Fallback to local
     }
   };
@@ -121,7 +121,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           localStorage.setItem('temiz_prices', JSON.stringify(data));
         }
       }
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Fallback
     }
   };
@@ -140,7 +140,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           localStorage.setItem('temiz_orders', JSON.stringify(data));
         }
       }
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Fallback
     }
   };
@@ -156,7 +156,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           localStorage.setItem('temiz_services', JSON.stringify(data));
         }
       }
-    } catch {}
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));}
   };
 
   // 5. Fetch coupons
@@ -170,7 +170,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           localStorage.setItem('temiz_coupons', JSON.stringify(data));
         }
       }
-    } catch {}
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));}
   };
 
   useEffect(() => {
@@ -183,7 +183,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           fetchCoupons(),
           adminToken ? fetchOrders() : Promise.resolve()
         ]);
-      } catch {
+      } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
         // Fallback handled inside functions
       }
     };
@@ -199,7 +199,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('temiz_site_settings', JSON.stringify(updated));
 
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -207,9 +207,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
         body: JSON.stringify(updated)
       });
-    } catch {
-      // Local storage already updated
-    }
+      if (!res.ok) {
+         const err = await res.json();
+         alert('Ayarlar veritabanına kaydedilemedi: ' + (err.error || 'Bilinmeyen Hata'));
+      }
+    } catch (err: any) { alert('Ağ Hatası: ' + err.message); }
     return true;
   };
 
@@ -228,7 +230,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
         body: JSON.stringify(item)
       });
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Local storage saved
     }
     return true;
@@ -249,7 +251,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
         body: JSON.stringify({ item })
       });
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Local storage saved
     }
     return true;
@@ -266,7 +268,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'DELETE',
         headers: { 'x-admin-token': adminToken || '' }
       });
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Local storage saved
     }
     return true;
@@ -283,7 +285,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken || '' },
         body: JSON.stringify(item)
       });
-    } catch {}
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));}
     return true;
   };
 
@@ -298,7 +300,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken || '' },
         body: JSON.stringify({ item })
       });
-    } catch {}
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));}
     return true;
   };
 
@@ -312,7 +314,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'DELETE',
         headers: { 'x-admin-token': adminToken || '' }
       });
-    } catch {}
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));}
     return true;
   };
 
@@ -364,7 +366,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const data = await res.json();
         return { success: true, orderCode: data.order?.orderCode || orderCode };
       }
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Local saved
     }
     return { success: true, orderCode };
@@ -401,7 +403,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           whatsAppConfirmedAt: new Date().toISOString()
         })
       });
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Local fallback saved
     }
 
@@ -435,7 +437,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           status
         })
       });
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Local saved
     }
     return true;
@@ -452,7 +454,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'DELETE',
         headers: { 'x-admin-token': adminToken || '' }
       });
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Local deleted
     }
     return true;
@@ -468,7 +470,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'DELETE',
         headers: { 'x-admin-token': adminToken || '' }
       });
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Local cleared
     }
     return true;
@@ -500,7 +502,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return data;
         }
       }
-    } catch {
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
       // Fallback
     }
 
@@ -528,7 +530,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken || '' },
         body: JSON.stringify({ item: coupon })
       });
-    } catch {}
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));}
     return true;
   };
 
@@ -542,7 +544,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken || '' },
         body: JSON.stringify(coupon)
       });
-    } catch {}
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));}
     return true;
   };
 
@@ -555,7 +557,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         method: 'DELETE',
         headers: { 'x-admin-token': adminToken || '' }
       });
-    } catch {}
+    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));}
     return true;
   };
 
