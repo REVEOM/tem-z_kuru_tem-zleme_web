@@ -1,4 +1,4 @@
--- 1. Site Settings Tablosu
+-- 1. Site Ayarları (Settings) Tablosu
 CREATE TABLE IF NOT EXISTS public.site_settings (
   _key TEXT PRIMARY KEY,
   phone TEXT,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
   "announcementActive" BOOLEAN
 );
 
--- 2. Pricing Items Tablosu
+-- 2. Ürün ve Fiyatlar (Pricing) Tablosu
 CREATE TABLE IF NOT EXISTS public.pricing_items (
   id TEXT PRIMARY KEY,
   name TEXT,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public.pricing_items (
   popular BOOLEAN
 );
 
--- 3. Orders Tablosu
+-- 3. Siparişler (Orders) Tablosu
 CREATE TABLE IF NOT EXISTS public.orders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   "orderCode" TEXT UNIQUE NOT NULL,
@@ -45,20 +45,18 @@ CREATE TABLE IF NOT EXISTS public.orders (
   "isWhatsAppConfirmed" BOOLEAN DEFAULT false,
   "whatsAppConfirmedAt" TEXT,
   "orderSource" TEXT,
-  "createdAt" TEXT NOT NULL
+  "createdAt" TEXT NOT NULL,
+  notes TEXT,
+  "discountAmount" NUMERIC,
+  "couponCode" TEXT
 );
 
--- RLS (Row Level Security) Ayarları (Verilerin herkes tarafından okunabilmesi ve eklenebilmesi, ancak adminler tarafından güncellenebilmesi için genel açık izinler. Eğer RLS aktifse)
-ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read and write access" ON public.site_settings FOR ALL USING (true) WITH CHECK (true);
+-- Zaten oluşturulmuşsa Eksik Kolonları Eklemek İçin Alter (Güvenlik Önlemi)
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "discountAmount" NUMERIC;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "couponCode" TEXT;
 
-ALTER TABLE public.pricing_items ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read and write access" ON public.pricing_items FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read and write access" ON public.orders FOR ALL USING (true) WITH CHECK (true);
-
--- 4. Services Tablosu
+-- 4. Hizmetler (Services) Tablosu
 CREATE TABLE IF NOT EXISTS public.services (
   id TEXT PRIMARY KEY,
   title TEXT,
@@ -66,12 +64,13 @@ CREATE TABLE IF NOT EXISTS public.services (
   "longDesc" TEXT,
   icon TEXT,
   features JSONB,
-  tag TEXT
+  tag TEXT,
+  "startingPrice" TEXT
 );
-ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read and write access" ON public.services FOR ALL USING (true) WITH CHECK (true);
 
--- 5. Coupons Tablosu
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS "startingPrice" TEXT;
+
+-- 5. Kuponlar (Coupons) Tablosu
 CREATE TABLE IF NOT EXISTS public.coupons (
   code TEXT PRIMARY KEY,
   "discountPercent" NUMERIC,
@@ -80,5 +79,15 @@ CREATE TABLE IF NOT EXISTS public.coupons (
   description TEXT,
   "expiryDate" TEXT
 );
+
+-- Bütün tabloların okuma/yazma izinlerini ayarlayalım (Güvenlik Kalkanı)
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read and write access" ON public.site_settings FOR ALL USING (true) WITH CHECK (true);
+ALTER TABLE public.pricing_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read and write access" ON public.pricing_items FOR ALL USING (true) WITH CHECK (true);
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read and write access" ON public.orders FOR ALL USING (true) WITH CHECK (true);
+ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read and write access" ON public.services FOR ALL USING (true) WITH CHECK (true);
 ALTER TABLE public.coupons ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public read and write access" ON public.coupons FOR ALL USING (true) WITH CHECK (true);
