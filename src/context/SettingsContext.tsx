@@ -229,12 +229,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Update single price item
   const updatePriceItem = async (item: PriceItem): Promise<boolean> => {
+    const previous = prices;
     const updated = prices.map(p => p.id === item.id ? item : p);
     setPrices(updated);
     localStorage.setItem('temiz_prices', JSON.stringify(updated));
 
     try {
-      await fetch('/api/pricing', {
+      const res = await fetch('/api/pricing', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -242,20 +243,33 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
         body: JSON.stringify(item)
       });
-    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
-      // Local storage saved
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        // Rollback local state — DB'ye kaydedilmedi
+        setPrices(previous);
+        localStorage.setItem('temiz_prices', JSON.stringify(previous));
+        alert('Fiyat veritabanına kaydedilemedi: ' + (err.error || `HTTP ${res.status}`));
+        return false;
+      }
+    } catch (err: any) {
+      // Rollback local state
+      setPrices(previous);
+      localStorage.setItem('temiz_prices', JSON.stringify(previous));
+      alert('Ağ Hatası: ' + (err.message || 'Bilinmeyen hata'));
+      return false;
     }
     return true;
   };
 
   // Add new price item
   const addPriceItem = async (item: PriceItem): Promise<boolean> => {
+    const previous = prices;
     const updated = [item, ...prices];
     setPrices(updated);
     localStorage.setItem('temiz_prices', JSON.stringify(updated));
 
     try {
-      await fetch('/api/pricing', {
+      const res = await fetch('/api/pricing', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -263,25 +277,46 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
         body: JSON.stringify({ item })
       });
-    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
-      // Local storage saved
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        setPrices(previous);
+        localStorage.setItem('temiz_prices', JSON.stringify(previous));
+        alert('Fiyat eklenemedi: ' + (err.error || `HTTP ${res.status}`));
+        return false;
+      }
+    } catch (err: any) {
+      setPrices(previous);
+      localStorage.setItem('temiz_prices', JSON.stringify(previous));
+      alert('Ağ Hatası: ' + (err.message || 'Bilinmeyen hata'));
+      return false;
     }
     return true;
   };
 
   // Delete price item
   const deletePriceItem = async (id: string): Promise<boolean> => {
+    const previous = prices;
     const updated = prices.filter(p => p.id !== id);
     setPrices(updated);
     localStorage.setItem('temiz_prices', JSON.stringify(updated));
 
     try {
-      await fetch(`/api/pricing?id=${id}`, {
+      const res = await fetch(`/api/pricing?id=${id}`, {
         method: 'DELETE',
         headers: { 'x-admin-token': adminToken || '' }
       });
-    } catch (err: any) { alert('Hata: ' + (err.message || 'Bilinmeyen hata'));
-      // Local storage saved
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        setPrices(previous);
+        localStorage.setItem('temiz_prices', JSON.stringify(previous));
+        alert('Fiyat silinemedi: ' + (err.error || `HTTP ${res.status}`));
+        return false;
+      }
+    } catch (err: any) {
+      setPrices(previous);
+      localStorage.setItem('temiz_prices', JSON.stringify(previous));
+      alert('Ağ Hatası: ' + (err.message || 'Bilinmeyen hata'));
+      return false;
     }
     return true;
   };

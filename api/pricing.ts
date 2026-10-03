@@ -15,7 +15,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: items, error } = await supabase
       .from('pricing_items')
       .select('*')
-      .neq('active', false)
       .order('category')
       .order('name');
       
